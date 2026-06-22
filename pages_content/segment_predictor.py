@@ -41,6 +41,29 @@ SEGMENT_DESCRIPTIONS = {
     ),
 }
 
+SEGMENT_ACTIONS = {
+    "High-Value": [
+        "Retain aggressively through VIP programs",
+        "Offer early-access promotions",
+        "Provide priority customer support"
+    ],
+    "Regular": [
+        "Encourage upselling and cross-selling",
+        "Increase purchase frequency",
+        "Reward repeat purchases"
+    ],
+    "Occasional": [
+        "Promote repeat purchases",
+        "Send personalized recommendations",
+        "Build purchasing habits with incentives"
+    ],
+    "At-Risk": [
+        "Run win-back campaigns",
+        "Offer re-engagement discounts",
+        "Target with retention-focused messaging"
+    ],
+}
+
 SEGMENT_COLORS = {
     "High-Value": "#2E7D32",
     "Regular": "#1565C0",
@@ -104,7 +127,13 @@ def render_segment_predictor(artifacts, go_to):
         """,
         unsafe_allow_html=True,
     )
+    
+    st.write("")
 
+    st.markdown("#####  🎯 Recommended Business Actions")
+
+    for action in SEGMENT_ACTIONS.get(segment_name, []):
+        st.markdown(f"- {action}")
     st.write("")
     profiles = get_segment_profiles(
         artifacts["kmeans_model"], artifacts["scaler"], artifacts["cluster_name_map"]
@@ -113,32 +142,71 @@ def render_segment_predictor(artifacts, go_to):
 
     st.markdown("##### How this customer compares to the *typical* customer in this segment")
     m1, m2, m3 = st.columns(3)
+    recency_diff = recency - predicted_row["Recency"]
+    if abs(recency_diff) < 1:
+        recency_delta = "Near segment average"
+    else:
+        recency_delta = (
+            f"{abs(recency_diff):.0f} days "
+            f"{'higher' if recency_diff > 0 else 'lower'} than segment avg"
+        ) 
+    
     m1.metric(
         "Recency (days)",
         f"{recency:.0f}",
-        delta=f"{recency - predicted_row['Recency']:.0f} vs. segment avg",
-        delta_color="inverse",  # lower Recency is better -> flip coloring
+        delta=recency_delta,
+        delta_color="inverse"
     )
+    
+    freq_diff = frequency - predicted_row["Frequency"]
+    if abs(freq_diff) < 1:
+        freq_delta = "Near segment average"
+    else:
+        freq_delta = (
+            f"{abs(freq_diff):.0f} order "
+            f"{'above' if freq_diff > 0 else 'below'} segment avg"
+        )     
     m2.metric(
         "Frequency (orders)",
         f"{frequency:.0f}",
-        delta=f"{frequency - predicted_row['Frequency']:.0f} vs. segment avg",
+        delta=freq_delta
     )
+    
+    money_diff = monetary - predicted_row["Monetary"]
+    if abs(money_diff) < 1:
+        money_delta = "Near segment average"
+    else:
+        money_delta = (
+            f"£ {abs(money_diff):.0f} "
+            f"{'above' if money_diff > 0 else 'below'} segment avg"
+        ) 
     m3.metric(
         "Monetary (£)",
         f"£{monetary:,.2f}",
-        delta=f"£{monetary - predicted_row['Monetary']:,.2f} vs. segment avg",
+        delta=money_delta
     )
-
     with st.expander("Compare all four segment profiles"):
         display_df = profiles.copy()
         display_df["Recency"] = display_df["Recency"].round(1)
         display_df["Frequency"] = display_df["Frequency"].round(1)
         display_df["Monetary"] = display_df["Monetary"].round(2)
 
+        def hex_to_rgba(hex_color, alpha=0.20):
+            hex_color = hex_color.lstrip("#")
+            r = int(hex_color[0:2], 16)
+            g = int(hex_color[2:4], 16)
+            b = int(hex_color[4:6], 16)
+            return f"rgba({r},{g},{b},{alpha})"
+
+
         def highlight_predicted(row):
             if row["Segment"] == segment_name:
-                return ["background-color: rgba(46,125,50,0.20)"] * len(row)
+                bg = hex_to_rgba(
+                    SEGMENT_COLORS.get(segment_name, "#555555"),
+                    alpha=0.20
+                )
+                return [f"background-color: {bg}"] * len(row)
+
             return [""] * len(row)
 
         st.dataframe(
@@ -151,3 +219,27 @@ def render_segment_predictor(artifacts, go_to):
             "reconstructed directly from the trained model — not raw "
             "averages recomputed from the original dataset."
         )
+        st.write("")
+
+        with st.expander("ℹ️ About This Model"):
+            st.markdown("""
+        **Algorithm:** K-Means Clustering
+
+        **Features Used**
+        - Recency (days since last purchase)
+        - Frequency (number of orders)
+        - Monetary (total spend)
+
+        **Training Dataset**
+        - UCI Online Retail Dataset
+        - 391,150 cleaned transactions
+        - 4,334 customers
+
+        **Model Performance**
+        - Number of Clusters: 4
+        - Silhouette Score: 0.338
+
+        **Purpose**
+        This model groups customers into behavior-based segments to support
+        targeted marketing, retention campaigns, and customer value analysis.
+        """)
