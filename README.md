@@ -288,6 +288,7 @@ app.py
 
 5. Click **Deploy**
 
+##### For Preview: https://shopperspectrumapp-v01.streamlit.app/
 ---
 
 ## 🛠️ Technologies Used
