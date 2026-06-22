@@ -90,6 +90,10 @@ Find products that customers frequently purchase together using
         top_n=top_n,
     )
 
+    if not recommendations:
+        st.warning("No similar products found for this item.")
+        return
+
     st.write("")
     st.markdown("### Recommended Products")
     st.caption(
@@ -166,10 +170,10 @@ Find products that customers frequently purchase together using
 
     The match score represents cosine similarity between products based on customer purchase behavior.
 
-    - 40%+ → Very Strong Match
-    - 25-40% → Strong Match
-    - 10-25% → Moderate Match
-    - Below 10% → Weak Match
+    - 70%+ → Very Strong Match (green)
+    - 40-70% → Strong Match (blue)
+    - 20-40% → Moderate Match (orange)
+    - Below 20% → Weak Match (grey)
 
     Higher scores indicate that customers who purchased the selected product frequently purchased the recommended product as well.
     """)

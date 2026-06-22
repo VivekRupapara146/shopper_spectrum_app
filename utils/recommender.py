@@ -14,7 +14,11 @@ def get_product_choices(stockcode_to_desc: dict):
     options = {}
 
     for stockcode, desc in stockcode_to_desc.items():
-        label = f"{desc.strip()} ({stockcode})"
+        if not desc or str(desc).lower() == "nan":
+            desc_str = "Unknown Product"
+        else:
+            desc_str = str(desc).strip()
+        label = f"{desc_str} ({stockcode})"
         options[label] = stockcode
 
     return dict(sorted(options.items()))
@@ -33,13 +37,8 @@ def get_recommendations(
     if stockcode not in similarity_matrix.index:
         return []
 
-    scores = similarity_matrix.loc[stockcode]
-
-    recommendations = (
-        scores
-        .sort_values(ascending=False)
-        .iloc[1 : top_n + 1]
-    )
+    scores = similarity_matrix.loc[stockcode].drop(stockcode, errors="ignore")
+    recommendations = scores.sort_values(ascending=False).head(top_n)
 
     results = []
 
