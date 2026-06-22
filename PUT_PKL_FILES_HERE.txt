@@ -1,0 +1,9 @@
+Place the 5 files saved in Section 8 of the notebook here:
+
+- kmeans_model.pkl
+- rfm_scaler.pkl
+- cluster_name_map.pkl
+- item_similarity_matrix.pkl
+- stockcode_to_description.pkl
+
+The app will not run without these files present in this folder.
