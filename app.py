@@ -13,7 +13,7 @@ aren't using here.
 import streamlit as st
 from utils.data_loader import load_artifacts
 from pages_content.segment_predictor import render_segment_predictor
-from pages_content.recommender import render_recommender
+from pages_content.recommender_page import render_recommender
 
 # ----------------------------------------------------------------------------
 # Page config -- must be the first Streamlit command in the script
